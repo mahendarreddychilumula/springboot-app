@@ -1,0 +1,56 @@
+pipeline {
+    //   tools {
+    //     maven 'Maven3'
+    // }
+
+    agent any
+            environment {
+                registryName= "mahi1234"
+                    //- update your credentials ID after creating credentials for connecting to ACR
+               registryCredential = 'ACR'
+               dockerImage = ''
+                registryUrl = 'mahi1234.azurecr.io'
+                
+            }
+
+
+    stages {
+        stage('git clone') {
+            steps {
+                git branch: 'main', url: 'https://github.com/mahendarreddychilumula/springboot-app'
+            }
+        }
+        stage ('Build') {
+            steps {
+            sh 'mvn clean install'           
+        }
+     }
+     
+      stage ('Build Docker image') {
+        steps {
+                script {
+                    dockerImage = docker.build registryName
+                }
+            }
+        }
+        // Uploading Docker images into ACR
+        stage('Upload Image to ACR') {
+         steps{   
+             script {
+                docker.withRegistry( "http://${registryUrl}", registryCredential ) {
+                dockerImage.push()
+                }
+            }
+          }
+        }
+          stage ('K8S Deploy') {
+          steps {
+            script {
+                withKubeConfig([credentialsId: 'K8S', serverUrl: '']) {
+                sh ('kubectl apply -f  aks-deploy-from-acr.yaml')
+                }
+            }
+        }
+     }
+    }
+}
