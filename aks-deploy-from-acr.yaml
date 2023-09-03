@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: my-springboot-app
-        image: mahi1234:latest
+        image: mahi1234.azurecr.io/mahi1234:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 8085
